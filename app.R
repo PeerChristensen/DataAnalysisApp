@@ -3,6 +3,7 @@ library(shinydashboard)
 library(tidyverse)
 library(glue)
 library(tidymodels)
+library(shinyjs)
 
 columns <- names(iris)
 species_choices <- unique(iris$Species)
@@ -19,6 +20,7 @@ ui <- dashboardPage(
     )
   ),
   dashboardBody(
+    useShinyjs(),
     tabItems(
       tabItem(tabName = "home",
               h2("Home"),
@@ -33,7 +35,9 @@ ui <- dashboardPage(
                   radioButtons("sep", "Separator",
                              choices = c(Comma = ",",
                                          Semicolon = ";"),
-                             selected = ","),width=10
+                             selected = ","),
+                  actionButton("data_go", "Go"),
+                  width=10
                   )
                 ),
               fluidRow(
@@ -69,7 +73,12 @@ ui <- dashboardPage(
                 numericInput("Petal.Length","Petal.Length", value=0),
                 numericInput("Petal.Width","Petal.Width", value=0),
                 selectInput("Species", "Species",choices = species_choices),
-                actionButton("add_row", "Add row")),
+                actionButton("add_row", "Add row"),
+                textOutput("new_rows")
+                ),
+              fluidRow(
+                uiOutput("new_data_box")
+                ),
               box(
                 downloadButton("download_data", "Download data")
                 )
@@ -82,12 +91,25 @@ ui <- dashboardPage(
 
 server <- function(input, output, session) { 
   
-    values <- reactiveValues(df = NULL, km=NULL)
-
-    observeEvent(input$data, {
-
-      values$df <- read_csv(input$data$datapath)
-   # })
+    values <- reactiveValues(df = NULL, km=NULL, added=NULL)
+    
+    values$added_rows <- tibble(Sepal.Length = double(),
+                                Sepal.Width  = double(),
+                                Petal.Length = double(),
+                                Petal.Width  = double(),
+                                Species      = character()
+                                )
+    
+    observeEvent(input$data_go, {
+      
+      values$df <- read_delim(input$data$datapath, delim=input$sep)
+     # if (input$sep == ",") {
+     #   values$df <- read_csv(input$data$datapath)
+     # }
+     # else if (input$sep == ";") {
+     #   values$df <- read_csv2(input$data$datapath)
+     # }
+   
     
     # df <- reactive({
     # file <- input$data
@@ -149,24 +171,37 @@ server <- function(input, output, session) {
   })
   
   #------------- Enter/download data ----------------------------------------------------
-
-  observeEvent(input$add_row, {
+    msg <- reactiveVal()
+    observeEvent(input$add_row, {
     
- 
+    msg("New row added")
+      
     values$df <- values$df %>%
       add_row(Sepal.Length = input$Sepal.Length,
               Sepal.Width  = input$Sepal.Width,
               Petal.Length = input$Petal.Length,
               Petal.Width  = input$Petal.Width,
               Species      = input$Species)
-      
-    # df() %>%
-    #   add_row(Sepal.Length = input$Sepal.Length,
-    #           Sepal.Width  = input$Sepal.Width,
-    #           Petal.Length = input$Petal.Length,
-    #           Petal.Width  = input$Petal.Width,
-    #           Species      = input$Species) %>%
-    #   df()
+    
+    values$added_rows <- values$added_rows  %>%
+      add_row(Sepal.Length = input$Sepal.Length,
+              Sepal.Width  = input$Sepal.Width,
+              Petal.Length = input$Petal.Length,
+              Petal.Width  = input$Petal.Width,
+              Species      = input$Species)
+    
+    output$new_df <- renderDataTable({values$added_rows})
+    
+    output$new_data_box <- renderUI(box(h4("New data entries"),
+                                          dataTableOutput("new_df"),
+                                          width=10))
+    
+    output$new_rows <- renderText({msg()})
+
+    })
+    
+    observeEvent(input$add_row, {
+      delay(ms = 1000,msg(NULL))
     })
   
   output$download_data <- downloadHandler(
