@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = F)
 
 ```{r}
 params$kmeans_result %>%
-        ggplot(aes(!!params$x, !!params$y, colour =.cluster)) +
+        ggplot(aes(!!params$x, !!params$y, colour=.cluster)) +
         geom_point() +
         theme_minimal()
 ```

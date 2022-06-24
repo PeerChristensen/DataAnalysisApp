@@ -2,8 +2,10 @@ library(shiny)
 library(shinydashboard)
 library(tidyverse)
 library(glue)
+library(tidymodels)
 
 columns <- names(iris)
+species_choices <- unique(iris$Species)
 
 ui <- dashboardPage(
   dashboardHeader(title = "SEGES Dashboard"),
@@ -18,7 +20,6 @@ ui <- dashboardPage(
   ),
   dashboardBody(
     tabItems(
-      # First tab content
       tabItem(tabName = "home",
               h2("Home"),
               fluidRow(box(h4("Instructions"),
@@ -27,25 +28,21 @@ ui <- dashboardPage(
       tabItem(tabName = "data_upload",
               h2("Upload data"),
               fluidRow(
-              box(
-                fileInput("data", "Upload CSV File", accept = ".csv"),
-                radioButtons("sep", "Separator",
+                box(
+                  fileInput("data", "Upload CSV File", accept = ".csv"),
+                  radioButtons("sep", "Separator",
                              choices = c(Comma = ",",
                                          Semicolon = ";"),
-                             selected = ","),
-                width=10
-              )
-              ),
+                             selected = ","),width=10
+                  )
+                ),
               fluidRow(
                 uiOutput("validation_box")
-              )
-              ,
+                ),
               fluidRow(
-                uiOutput("data_box")#,
-                #box(dataTableOutput("data_contents"),width=10)
-
-              )
-      ),
+                uiOutput("data_box")
+                )
+              ),
       tabItem(tabName = "kmeans",
               h2("K-means clustering"),
               box(
@@ -55,37 +52,62 @@ ui <- dashboardPage(
                 actionButton("kmeansbutton", "Go"),
                 br(),
                 plotOutput("kmeansplot")
-              )
+                )
               ),
       tabItem(tabName = "report",
               h2("Download report"),
-              textInput("report_title","Report title"),
-              box(downloadButton("report", "Generate report"))
+              box(
+                textInput("report_title","Report title"),
+                downloadButton("report", "Generate report")
+                )
+              ),
+      tabItem(tabName = "data_entry",
+              h2("Enter data"),
+              box(
+                numericInput("Sepal.Length","Sepal.Length", value=0),
+                numericInput("Sepal.Width","Sepal.Width", value=0),
+                numericInput("Petal.Length","Petal.Length", value=0),
+                numericInput("Petal.Width","Petal.Width", value=0),
+                selectInput("Species", "Species",choices = species_choices),
+                actionButton("add_row", "Add row")),
+              box(
+                downloadButton("download_data", "Download data")
+                )
               )
+      )
     )
   )
-)
+
+#------------- SERVER ----------------------------------------------------
 
 server <- function(input, output, session) { 
   
-  df <- reactive({
-    file <- input$data
-    if (is.null(file)) { return(NULL) }
-    if (input$sep == ",") { read_csv(file$datapath, col_names = T) }
-    else if (input$sep == ";") { read_csv2(file$datapath) }
-  })
-  
-  #------------- Validation ----------------------------------------------------
-  observeEvent(input$data, {
+    values <- reactiveValues(df = NULL, km=NULL)
+
+    observeEvent(input$data, {
+
+      values$df <- read_csv(input$data$datapath)
+   # })
     
-    output$col_match <- renderText(
+    # df <- reactive({
+    # file <- input$data
+    # if (is.null(file)) { return(NULL) }
+    # if (input$sep == ",") { read_csv(file$datapath, col_names = T) }
+    # else if (input$sep == ";") { read_csv2(file$datapath) }
+    # })
+  
+#------------- Validation ----------------------------------------------------
+  
+  #  observeEvent(input$data, {
+    
+      output$col_match <- renderText(
     {
-      if (identical( names(df()), columns) ) {"Column names match"}
-      else if (!identical( names(df()), columns) )  {"Column names do not match"}
+      if (identical( names(values$df), columns) ) {"Column names match"}
+      else if (!identical( names(values$df), columns) )  {"Column names do not match"}
           })
     
     output$missing <- renderText(
-    {glue("N rows containing missing values: {sum(!complete.cases(df()))}") })
+    {glue("N rows containing missing values: {sum(!complete.cases(values$df))}") })
   
     output$validation_box <- renderUI(box(h4("Validation"),
                                         textOutput("col_match"),
@@ -95,9 +117,9 @@ server <- function(input, output, session) {
   output$data_box <- renderUI(box(dataTableOutput("data_contents"),width=10))
   
   output$data_contents <- renderDataTable(
-          df(), options = list(pageLength = 5,lengthMenu = c(5, 10, 50, 100)))
+          values$df, options = list(pageLength = 5,lengthMenu = c(5, 10, 50, 100)))
   
-  choices <- df() %>% select_if(is.numeric) %>% names()
+  choices <- values$df %>% select_if(is.numeric) %>% names()
   updateSelectInput(session, "x_var",choices = choices, selected=choices[1])
   updateSelectInput(session, "y_var",choices = choices, selected=choices[2])
   
@@ -107,28 +129,59 @@ server <- function(input, output, session) {
   
   observeEvent(input$kmeansbutton, {
     
-    kmeans_data <- df() %>%
+    kmeans_data <- values$df %>%
       select_if(is.numeric)
     
     kmeans_result <- kmeans_data %>% 
       kmeans(centers = input$nclusters) %>%
       augment(kmeans_data)
     
+    values$km <- kmeans_result
+    
     output$kmeansplot <- renderPlot(
       
-     kmeans_result %>%
-        ggplot(aes(!!input$x_var, !!input$y_var, colour=.cluster)) +
+      kmeans_result %>%
+        ggplot(aes(!!input$x_var, !!input$y_var, colour = .cluster)) +
         geom_point() +
         theme_minimal()
-      
       )
+    
   })
+  
+  #------------- Enter/download data ----------------------------------------------------
+
+  observeEvent(input$add_row, {
+    
+ 
+    values$df <- values$df %>%
+      add_row(Sepal.Length = input$Sepal.Length,
+              Sepal.Width  = input$Sepal.Width,
+              Petal.Length = input$Petal.Length,
+              Petal.Width  = input$Petal.Width,
+              Species      = input$Species)
+      
+    # df() %>%
+    #   add_row(Sepal.Length = input$Sepal.Length,
+    #           Sepal.Width  = input$Sepal.Width,
+    #           Petal.Length = input$Petal.Length,
+    #           Petal.Width  = input$Petal.Width,
+    #           Species      = input$Species) %>%
+    #   df()
+    })
+  
+  output$download_data <- downloadHandler(
+    filename = function() {
+      paste("dataset.csv", sep = "")
+    },
+    content = function(file) {
+      write_csv(values$df, file)
+    }
+  )
   
   #-------------  Report ----------------------------------------------------
   
   output$report <- downloadHandler(
-    # For PDF output, change this to "report.pdf"
-    #filename = "report.html",
+
     filename = function(){
       paste0(input$report_title,".html")
     },
@@ -138,20 +191,30 @@ server <- function(input, output, session) {
       # can happen when deployed).
       tempReport <- file.path(tempdir(), "report.Rmd")
       file.copy("report.Rmd", tempReport, overwrite = TRUE)
-      
-      # Set up parameters to pass to Rmd document
+
       params <- list(title = input$report_title,
-                    kmeans_result = kmeans_result,
+                     kmeans_result = values$km,
                      x = input$x_var,
                      y = input$y_var)
       
       # Knit the document, passing in the `params` list, and eval it in a
       # child of the global environment (this isolates the code in the document
       # from the code in this app).
-      rmarkdown::render(tempReport, output_file = file,
-                        params = params,
-                        envir = new.env(parent = globalenv())
-      )
+      
+      # rmarkdown::render(tempReport, output_file = file,
+      #                   params = params,
+      #                   envir = new.env(parent = globalenv())
+      # )
+      render_markdown <- function(){
+        rmarkdown::render(tempReport,
+                          #output_format = html_document(),
+                          output_file = file,
+                          params = params,
+                          #envir = new.env(parent = globalenv())
+                          )}
+        
+        render_markdown()
+        
     }
   )
 }
