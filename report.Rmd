@@ -1,0 +1,23 @@
+---
+title: "`r params$title`"
+output: html_document
+params:
+  kmeans_result: NA
+  x: NA
+  y: NA
+  title: NA
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+```
+
+## K-means plot
+
+```{r}
+params$kmeans_result %>%
+        ggplot(aes(!!params$x, !!params$y, colour =.cluster)) +
+        geom_point() +
+        theme_minimal()
+```
+
