@@ -4,12 +4,21 @@ library(tidyverse)
 library(glue)
 library(tidymodels)
 library(shinyjs)
+library(fresh)
+
+light <- "white"
+medium <- "#F0F0E9"
+dark <- "#E0E0D4"
+green <- "#00511D"
+text <- "#555555"
+
 
 columns <- names(iris)
 species_choices <- unique(iris$Species)
 
-ui <- dashboardPage(
-  dashboardHeader(title = "K-means App"),
+ui <- dashboardPage(#skin = "green",
+  dashboardHeader(title = span("K-Means App", 
+                               style = "color: #00511D; font-size: 25px; font-weight:bold;")),
   dashboardSidebar(collapsed=F,
     sidebarMenu(
       menuItem("Home", tabName = "home", icon = icon("home")),
@@ -20,6 +29,11 @@ ui <- dashboardPage(
     )
   ),
   dashboardBody(
+    tags$head(
+      tags$link(rel = "stylesheet", type = "text/css", href = "mytheme.css"),
+      tags$style("h2 {color:#555555;}; h4 {color:#555555;}; p {color:#555555;}")
+      ),
+    #use_theme(mytheme),
     useShinyjs(),
     tabItems(
       tabItem(tabName = "home",
@@ -32,6 +46,7 @@ ui <- dashboardPage(
               fluidRow(
                 box(
                   fileInput("data", "Upload CSV File", accept = ".csv"),
+                  tags$style(".progress-bar {background-color: #00511D;}"),
                   radioButtons("sep", "Separator",
                              choices = c(Comma = ",",
                                          Semicolon = ";"),
