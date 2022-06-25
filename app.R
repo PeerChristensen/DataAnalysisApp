@@ -9,14 +9,14 @@ columns <- names(iris)
 species_choices <- unique(iris$Species)
 
 ui <- dashboardPage(
-  dashboardHeader(title = "SEGES Dashboard"),
+  dashboardHeader(title = "K-means App"),
   dashboardSidebar(collapsed=F,
     sidebarMenu(
       menuItem("Home", tabName = "home", icon = icon("home")),
       menuItem("Upload Data", tabName = "data_upload", icon = icon("database")),
-      menuItem("Enter Data", tabName = "data_entry", icon = icon("pen")),
-      menuItem("K-means clustering", tabName = "kmeans", icon = icon("calculator")),
-      menuItem("Get report and data", tabName = "report", icon = icon("file-export"))
+      menuItemOutput("add_rows_menu"),
+      menuItemOutput("km_menu"),
+      menuItemOutput("report_menu")
     )
   ),
   dashboardBody(
@@ -60,16 +60,18 @@ ui <- dashboardPage(
       tabItem(tabName = "report",
               h2("Download report and data"),
               box(
-                textInput("report_title","Report title"),
+                textInput("report_title","Report title", value = "Report"),
+                textInput("report_author","Author name"),
+                textInput("description", "Description"),
                 downloadButton("report", "Generate report")
                 ),
               fluidRow(),
               box(
                 downloadButton("download_data", "Download data")
                 )
-                ),
+              ),
       tabItem(tabName = "data_entry",
-              h2("Enter data"),
+              h2("Add data rows"),
               box(
                 numericInput("Sepal.Length","Sepal.Length", value=0),
                 numericInput("Sepal.Width","Sepal.Width", value=0),
@@ -100,28 +102,23 @@ server <- function(input, output, session) {
                                 Species      = character()
                                 )
     
-    observeEvent(input$data_go, {
+    observeEvent(input$data_go, { # note the scope of this..
       
       values$df <- read_delim(input$data$datapath, delim=input$sep)
-     # if (input$sep == ",") {
-     #   values$df <- read_csv(input$data$datapath)
-     # }
-     # else if (input$sep == ";") {
-     #   values$df <- read_csv2(input$data$datapath)
-     # }
-   
-    
-    # df <- reactive({
-    # file <- input$data
-    # if (is.null(file)) { return(NULL) }
-    # if (input$sep == ",") { read_csv(file$datapath, col_names = T) }
-    # else if (input$sep == ";") { read_csv2(file$datapath) }
-    # })
+      
+      output$add_rows_menu <- renderMenu({
+        menuItem("Add data rows", tabName = "data_entry", icon = icon("pen"))
+        })
+      output$km_menu <- renderMenu({
+        menuItem("K-means clustering", tabName = "kmeans", icon = icon("calculator"))
+      })
+      output$report_menu <- renderMenu({
+        menuItem("Get report and data", tabName = "report", icon = icon("file-export"))
+        
+      })
   
 #------------- Validation ----------------------------------------------------
   
-  #  observeEvent(input$data, {
-    
       output$col_match <- renderText(
     {
       if (identical( names(values$df), columns) ) {"Column names match"}
@@ -133,10 +130,9 @@ server <- function(input, output, session) {
   
     output$validation_box <- renderUI(box(h4("Validation"),
                                         textOutput("col_match"),
-                                        textOutput("missing"),
-                                        width=10))
+                                        textOutput("missing")))
   
-  output$data_box <- renderUI(box(dataTableOutput("data_contents"),width=10))
+  output$data_box <- renderUI(box(dataTableOutput("data_contents")))
   
   output$data_contents <- renderDataTable(
           values$df, options = list(pageLength = 5,lengthMenu = c(5, 10, 50, 100)))
@@ -171,6 +167,7 @@ server <- function(input, output, session) {
   })
   
   #------------- Enter/download data ----------------------------------------------------
+    
     msg <- reactiveVal()
     observeEvent(input$add_row, {
     
@@ -228,21 +225,14 @@ server <- function(input, output, session) {
       file.copy("report.Rmd", tempReport, overwrite = TRUE)
 
       params <- list(title = input$report_title,
+                     author = input$report_author,
+                     description = input$description,
                      kmeans_result = values$km,
                      x = input$x_var,
                      y = input$y_var)
       
-      # Knit the document, passing in the `params` list, and eval it in a
-      # child of the global environment (this isolates the code in the document
-      # from the code in this app).
-      
-      # rmarkdown::render(tempReport, output_file = file,
-      #                   params = params,
-      #                   envir = new.env(parent = globalenv())
-      # )
       render_markdown <- function(){
         rmarkdown::render(tempReport,
-                          #output_format = html_document(),
                           output_file = file,
                           params = params,
                           #envir = new.env(parent = globalenv())
