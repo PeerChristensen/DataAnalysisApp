@@ -119,31 +119,34 @@ server <- function(input, output, session) {
   
 #------------- Validation ----------------------------------------------------
   
+      # column match
       output$col_match <- renderText(
-    {
+        {
       if (identical( names(values$df), columns) ) {"Column names match"}
       else if (!identical( names(values$df), columns) )  {"Column names do not match"}
           })
     
-    output$missing <- renderText(
-    {glue("N rows containing missing values: {sum(!complete.cases(values$df))}") })
-  
-    output$validation_box <- renderUI(box(h4("Validation"),
+      # missing values
+      output$missing <- renderText(
+      {glue("N rows containing missing values: {sum(!complete.cases(values$df))}") })
+
+      output$validation_box <- renderUI(box(h4("Validation"),
                                         textOutput("col_match"),
                                         textOutput("missing")))
+      
+      # show data
+      output$data_box <- renderUI(box(dataTableOutput("data_contents")))
   
-  output$data_box <- renderUI(box(dataTableOutput("data_contents")))
-  
-  output$data_contents <- renderDataTable(
+      output$data_contents <- renderDataTable(
           values$df, options = list(pageLength = 5,lengthMenu = c(5, 10, 50, 100)))
   
-  choices <- values$df %>% select_if(is.numeric) %>% names()
-  updateSelectInput(session, "x_var",choices = choices, selected=choices[1])
-  updateSelectInput(session, "y_var",choices = choices, selected=choices[2])
+      #------------- k-means ----------------------------------------------------
+      
+      choices <- values$df %>% select_if(is.numeric) %>% names()
+      updateSelectInput(session, "x_var",choices = choices, selected=choices[1])
+      updateSelectInput(session, "y_var",choices = choices, selected=choices[2])
   
-    })
-  
-  #------------- k-means ----------------------------------------------------
+    }) # when data is uploaded
   
   observeEvent(input$kmeansbutton, {
     
@@ -163,7 +166,6 @@ server <- function(input, output, session) {
         geom_point() +
         theme_minimal()
       )
-    
   })
   
   #------------- Enter/download data ----------------------------------------------------
@@ -239,7 +241,6 @@ server <- function(input, output, session) {
                           )}
         
         render_markdown()
-        
     }
   )
 }
