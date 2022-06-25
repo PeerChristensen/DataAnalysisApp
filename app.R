@@ -16,7 +16,7 @@ ui <- dashboardPage(
       menuItem("Upload Data", tabName = "data_upload", icon = icon("database")),
       menuItem("Enter Data", tabName = "data_entry", icon = icon("pen")),
       menuItem("K-means clustering", tabName = "kmeans", icon = icon("calculator")),
-      menuItem("Get report", tabName = "report", icon = icon("file-export"))
+      menuItem("Get report and data", tabName = "report", icon = icon("file-export"))
     )
   ),
   dashboardBody(
@@ -36,8 +36,7 @@ ui <- dashboardPage(
                              choices = c(Comma = ",",
                                          Semicolon = ";"),
                              selected = ","),
-                  actionButton("data_go", "Go"),
-                  width=10
+                  actionButton("data_go", "Go")
                   )
                 ),
               fluidRow(
@@ -59,12 +58,16 @@ ui <- dashboardPage(
                 )
               ),
       tabItem(tabName = "report",
-              h2("Download report"),
+              h2("Download report and data"),
               box(
                 textInput("report_title","Report title"),
                 downloadButton("report", "Generate report")
+                ),
+              fluidRow(),
+              box(
+                downloadButton("download_data", "Download data")
                 )
-              ),
+                ),
       tabItem(tabName = "data_entry",
               h2("Enter data"),
               box(
@@ -78,9 +81,6 @@ ui <- dashboardPage(
                 ),
               fluidRow(
                 uiOutput("new_data_box")
-                ),
-              box(
-                downloadButton("download_data", "Download data")
                 )
               )
       )
