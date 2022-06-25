@@ -15,10 +15,15 @@ text <- "#555555"
 
 columns <- names(iris)
 species_choices <- unique(iris$Species)
+instructions1 <- "To use this app, first select 'Upload Data' in the sidebar menu and upload a dataset"
+instructions2 <- "Once read, the data undergoes a number of validation steps and you will be able to inspect the data"
+instructions3 <- "If you wish to add rows to the data, select the 'Add data rows'menu item, which should be available upon data upload."
+instructions4 <- "Next, you will be able to perform k-means clustering in an explorative way and inspect the results in a plot."
+instructions5 <- "Finally, you will be able to generate and download a report of your analysis as well as the dataset, which will include all added rows."
 
 ui <- dashboardPage(#skin = "green",
   dashboardHeader(title = span("K-Means App", 
-                               style = "color: #00511D; font-size: 25px; font-weight:bold;")),
+                               style = "color: #00511D; font-size: 25px; font-weight:bold;font-family:LFPressSans,Arial,Verdana,sans-serif;")),
   dashboardSidebar(collapsed=F,
     sidebarMenu(
       menuItem("Home", tabName = "home", icon = icon("home")),
@@ -39,7 +44,11 @@ ui <- dashboardPage(#skin = "green",
       tabItem(tabName = "home",
               h2("Home"),
               fluidRow(box(h4("Instructions"),
-                "Instructions on how to use the app go here"))
+                p(instructions1),
+                p(instructions2),
+                p(instructions3),
+                p(instructions4),
+                p(instructions5)))
               ),
       tabItem(tabName = "data_upload",
               h2("Upload data"),
