@@ -86,7 +86,7 @@ ui <- dashboardPage(
               box(
                 textInput("report_title","Report title", value = "Report"),
                 textInput("report_author","Author name"),
-                textInput("description", "Description"),
+                textAreaInput("description", "Description"),
                 downloadButton("report", "Generate report")
                 ),
               fluidRow(),
@@ -187,7 +187,7 @@ server <- function(input, output, session) {
       
       kmeans_result %>%
         ggplot(aes(!!input$x_var, !!input$y_var, colour = .cluster)) +
-        geom_point() +
+        geom_point(size = 2, alpha = .75) +
         theme_minimal()
       )
   })
