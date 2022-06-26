@@ -21,13 +21,13 @@ instructions3 <- "If you wish to add rows to the data, select the 'Add data rows
 instructions4 <- "Next, you will be able to perform k-means clustering in an explorative way and inspect the results in a plot."
 instructions5 <- "Finally, you will be able to generate and download a report of your analysis as well as the dataset, which will include all added rows."
 
-ui <- dashboardPage(#skin = "green",
-  dashboardHeader(title = span("K-Means App", 
+ui <- dashboardPage(
+  dashboardHeader(title = span("K-MEANS APP", 
                                style = "color: #00511D; font-size: 25px; font-weight:bold;font-family:LFPressSans,Arial,Verdana,sans-serif;")),
   dashboardSidebar(collapsed=F,
     sidebarMenu(
-      menuItem("Home", tabName = "home", icon = icon("home")),
-      menuItem("Upload Data", tabName = "data_upload", icon = icon("database")),
+      menuItem("HOME", tabName = "home", icon = icon("home")),
+      menuItem("UPLOAD DATA", tabName = "data_upload", icon = icon("database")),
       menuItemOutput("add_rows_menu"),
       menuItemOutput("km_menu"),
       menuItemOutput("report_menu")
@@ -42,8 +42,8 @@ ui <- dashboardPage(#skin = "green",
     useShinyjs(),
     tabItems(
       tabItem(tabName = "home",
-              h2("Home"),
-              fluidRow(box(h4("Instructions"),
+              h2("HOME"),
+              fluidRow(box(h4("INSTRUCTIONS"),
                 p(instructions1),
                 p(instructions2),
                 p(instructions3),
@@ -51,7 +51,7 @@ ui <- dashboardPage(#skin = "green",
                 p(instructions5)))
               ),
       tabItem(tabName = "data_upload",
-              h2("Upload data"),
+              h2("UPLOAD DATA"),
               fluidRow(
                 box(
                   fileInput("data", "Upload CSV File", accept = ".csv"),
@@ -71,7 +71,7 @@ ui <- dashboardPage(#skin = "green",
                 )
               ),
       tabItem(tabName = "kmeans",
-              h2("K-means clustering"),
+              h2("K-MEANS CLUSTERING"),
               box(
                 numericInput("nclusters", "Number of clusters", value = 3),
                 varSelectInput("x_var", "X variable",c()),
@@ -82,7 +82,7 @@ ui <- dashboardPage(#skin = "green",
                 )
               ),
       tabItem(tabName = "report",
-              h2("Download report and data"),
+              h2("DOWNLOAD REPORT AND DATA"),
               box(
                 textInput("report_title","Report title", value = "Report"),
                 textInput("report_author","Author name"),
@@ -95,7 +95,7 @@ ui <- dashboardPage(#skin = "green",
                 )
               ),
       tabItem(tabName = "data_entry",
-              h2("Add data rows"),
+              h2("ADD DATA ROWS"),
               box(
                 numericInput("Sepal.Length","Sepal.Length", value=0),
                 numericInput("Sepal.Width","Sepal.Width", value=0),
@@ -131,13 +131,13 @@ server <- function(input, output, session) {
       values$df <- read_delim(input$data$datapath, delim=input$sep)
       
       output$add_rows_menu <- renderMenu({
-        menuItem("Add data rows", tabName = "data_entry", icon = icon("pen"))
+        menuItem("ADD DATA ROWS", tabName = "data_entry", icon = icon("pen"))
         })
       output$km_menu <- renderMenu({
-        menuItem("K-means clustering", tabName = "kmeans", icon = icon("calculator"))
+        menuItem("K-MEANS CLUSTERING", tabName = "kmeans", icon = icon("calculator"))
       })
       output$report_menu <- renderMenu({
-        menuItem("Get report and data", tabName = "report", icon = icon("file-export"))
+        menuItem("DOWNLOAD REPORT AND DATA", tabName = "report", icon = icon("file-export"))
         
       })
   
@@ -154,7 +154,7 @@ server <- function(input, output, session) {
       output$missing <- renderText(
       {glue("N rows containing missing values: {sum(!complete.cases(values$df))}") })
 
-      output$validation_box <- renderUI(box(h4("Validation"),
+      output$validation_box <- renderUI(box(h4("VALIDATION"),
                                         textOutput("col_match"),
                                         textOutput("missing")))
       
@@ -215,16 +215,15 @@ server <- function(input, output, session) {
     
     output$new_df <- renderDataTable({values$added_rows})
     
-    output$new_data_box <- renderUI(box(h4("New data entries"),
-                                          dataTableOutput("new_df"),
-                                          width=10))
+    output$new_data_box <- renderUI(box(h4("NEW DATA ENTRIES"),
+                                          dataTableOutput("new_df")))
     
     output$new_rows <- renderText({msg()})
 
     })
     
     observeEvent(input$add_row, {
-      delay(ms = 1000,msg(NULL))
+      delay(ms = 1000, msg(NULL))
     })
   
   output$download_data <- downloadHandler(
