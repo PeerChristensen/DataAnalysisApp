@@ -22,6 +22,7 @@ instructions4 <- "Next, you will be able to perform k-means clustering in an exp
 instructions5 <- "Finally, you will be able to generate and download a report of your analysis as well as the dataset, which will include all added rows."
 
 ui <- dashboardPage(
+  title = "K-MEANS APP",
   dashboardHeader(title = span("K-MEANS APP", 
                                style = "color: #00511D; font-size: 25px; font-weight:bold;font-family:LFPressSans,Arial,Verdana,sans-serif;")),
   dashboardSidebar(collapsed=F,
