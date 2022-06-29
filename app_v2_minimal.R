@@ -15,12 +15,7 @@ text <- "#555555"
 columns <- names(iris)
 species_choices <- unique(iris$Species)
 
-instructions1 <- "To use this app, first select 'Upload Data' in the sidebar menu and upload a dataset"
-instructions2 <- "Once read, the data undergoes a number of validation steps and you will be able to inspect the data"
-instructions3 <- "If you wish to add rows to the data, select the 'Add data rows'menu item, which should be available upon data upload."
-instructions4 <- "Next, you will be able to perform k-means clustering in an explorative way and inspect the results in a plot."
-instructions5 <- "Finally, you will be able to generate and download a report of your analysis as well as the dataset, which will include all added rows."
-
+instructions1 <- "Some instructions on how to use the app should go here"
 
 ui <- dashboardPage(
   title = "DATA ANALYSIS",
@@ -50,10 +45,7 @@ ui <- dashboardPage(
             h2("HOME"),
             box(
               h4("INSTRUCTIONS"),
-              p(instructions1),
-              p(instructions2),
-              p(instructions3),
-              p(instructions4)
+              p(instructions1)
               )
             ),
     tabItem(tabName = "iris1",
@@ -63,6 +55,7 @@ ui <- dashboardPage(
               box(
                 tabsetPanel(
                   tabPanel("UPLOAD DATA",
+                           h2("UPLOAD DATA"),
                            box(
                                fileInput("iris1_data_input", "Upload CSV File", accept = ".csv"),
                                tags$style(".progress-bar {background-color: #00511D;}"),
@@ -94,8 +87,8 @@ ui <- dashboardPage(
                              uiOutput("new_data_box")
                            )),
                   tabPanel("RUN SCRIPT",
+                           h2("K-MEANS CLUSTERING"),
                            box(
-                             h2("K-MEANS CLUSTERING"),
                              numericInput("nclusters", "Number of clusters", value = 3),
                              varSelectInput("x_var", "X variable",c()),
                              varSelectInput("y_var", "Y variable",c() ),
