@@ -4,6 +4,48 @@ library(shiny)
 columns <- names(iris)
 species_choices <- unique(iris$Species)
 
+create_menu_items <- function(x) {
+  
+  renderMenu({
+    menu_list <- lapply(
+      unique(items$dataset),
+      function(x) {
+        sub_menu_list = lapply(
+          items[items$dataset == x,]$experiment,
+          function(y) {
+            menuSubItem(y, tabName = str_replace_all(paste0("ExpID_", x, "_", y)," ","")
+            )
+          }
+        )
+        menuItem(text = x, do.call(tagList, sub_menu_list))
+      }
+    )
+    sidebarMenu(menu_list)
+  })
+}
+
+create_tab_items <- function(x) {
+  
+  tab_names <- unlist(items$id)
+  tab_headers <- unlist(items$experiment)
+  tab_ui <- unlist(items$id)
+  
+  renderUI({
+    tabs <- lapply(1:length(tab_names), function(i) {
+      tabItem(tabName = tab_names[i],
+              h2(tab_headers[i]),
+              tabUI(tab_ui[i]),
+      )
+
+    })
+    do.call(tabItems, tabs)
+    # tabItems(
+    #     tabItem(tabName = "ExpID_iris_exp1",h2("exp 1"), p("hello1")),
+    #     tabItem(tabName = "ExpID_iris_exp2",h2("exp 2"), p("hello2"))
+    #     )
+  })
+}
+
 
 tabUI <- function(id) {
   ns <- NS(id)
